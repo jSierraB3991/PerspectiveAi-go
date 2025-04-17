@@ -61,10 +61,6 @@ func (ctrl *HubController) NotifyHandler(c echo.Context) error {
 		Name:    req.Name,
 		Message: []byte(req.Message),
 	}
-	ctrl.hub.SendTo <- models.TargetedMessage{
-		Name:    c.QueryParam("name"),
-		Message: []byte(req.Message),
-	}
 
 	return c.JSON(http.StatusOK, map[string]string{"status": "notificación enviada"})
 
