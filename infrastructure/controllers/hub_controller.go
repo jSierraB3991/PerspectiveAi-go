@@ -59,7 +59,7 @@ func (ctrl *HubController) NotifyHandler(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
-	message, err := ctrl.perspectiveService.Analyze(message)
+	message, err := ctrl.perspectiveService.Analyze(req.Message)
 	if err != nil {
 		log.Println(err)
 		return err
