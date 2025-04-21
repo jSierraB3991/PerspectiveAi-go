@@ -1,20 +1,23 @@
 package controllers
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 	"github.com/jSierraB3991/PerspectiveAi-go/domain/models"
 	"github.com/jSierraB3991/PerspectiveAi-go/infrastructure/request"
+	"github.com/jSierraB3991/PerspectiveAi-go/infrastructure/service"
 	"github.com/labstack/echo/v4"
 )
 
 type HubController struct {
-	hub      *models.Hub
-	upgrader *websocket.Upgrader
+	hub                *models.Hub
+	upgrader           *websocket.Upgrader
+	perspectiveService *service.PerspectiveService
 }
 
-func NewHubController(hub *models.Hub) *HubController {
+func NewHubController(hub *models.Hub, perspectiveService *service.PerspectiveService) *HubController {
 
 	// Actualizador de websocket
 	var upgrader = websocket.Upgrader{
@@ -22,7 +25,7 @@ func NewHubController(hub *models.Hub) *HubController {
 			return true
 		},
 	}
-	return &HubController{hub: hub, upgrader: &upgrader}
+	return &HubController{hub: hub, upgrader: &upgrader, perspectiveService: perspectiveService}
 }
 
 func (ctrl *HubController) ServeWsHanlder() echo.HandlerFunc {
@@ -56,10 +59,15 @@ func (ctrl *HubController) NotifyHandler(c echo.Context) error {
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
 	}
+	message, err := ctrl.perspectiveService.Analyze(message)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 
 	ctrl.hub.SendTo <- models.TargetedMessage{
 		Name:    req.Name,
-		Message: []byte(req.Message),
+		Message: []byte(message),
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"status": "notificación enviada"})
